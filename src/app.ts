@@ -1,10 +1,11 @@
 import fastify from 'fastify'
-import { knex } from './database'
+import cookie from '@fastify/cookie'
+import { mealsRoutes } from './routes/meals'
 
 export const app = fastify()
 
-app.get('/', async () => {
-  const meals = await knex('meals').select('*')
+app.register(cookie)
 
-  return { meals }
+app.register(mealsRoutes, {
+  prefix: 'meals',
 })
