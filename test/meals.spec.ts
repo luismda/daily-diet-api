@@ -1,6 +1,6 @@
 import { it, describe, beforeAll, afterAll, beforeEach, expect } from 'vitest'
 import request from 'supertest'
-import { format } from 'date-fns'
+import { format, addHours } from 'date-fns'
 import { execSync } from 'node:child_process'
 import { app } from '../src/app'
 
@@ -183,5 +183,87 @@ describe('Meals routes', () => {
       .expect(200)
 
     expect(emptyMealsResponse.body.meals).toEqual([])
+  })
+
+  it('should be able to get metrics', async () => {
+    const consumedAt = new Date().toISOString()
+
+    const response = await request(app.server)
+      .post('/meals')
+      .send({
+        name: 'Chicken with potato',
+        description: 'Chicken with potato accompained by brown rice.',
+        consumed_at: consumedAt,
+        is_inside_diet: true,
+      })
+      .expect(201)
+
+    const cookies = response.get('Set-Cookie')
+
+    await request(app.server)
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'Natural juice',
+        description: 'Natural juice of orange.',
+        consumed_at: consumedAt,
+        is_inside_diet: true,
+      })
+      .expect(201)
+
+    await request(app.server)
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'Cupcake of chocolate',
+        description: 'Cupcake with very chocolate!!!',
+        consumed_at: consumedAt,
+        is_inside_diet: false,
+      })
+      .expect(201)
+
+    await request(app.server)
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'Fruit salad',
+        description: 'Red fruit salad.',
+        consumed_at: consumedAt,
+        is_inside_diet: true,
+      })
+      .expect(201)
+
+    await request(app.server)
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'Vitamin',
+        description: 'Vitamin of banana.',
+        consumed_at: consumedAt,
+        is_inside_diet: true,
+      })
+      .expect(201)
+
+    await request(app.server)
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'Cereal',
+        description: 'Cereal with milk.',
+        consumed_at: addHours(new Date(consumedAt), 25).toISOString(), // Add 25 hours
+        is_inside_diet: true,
+      })
+      .expect(201)
+
+    const mestricsResponse = await request(app.server)
+      .get('/meals/metrics')
+      .set('Cookie', cookies)
+
+    expect(mestricsResponse.body.metrics).toEqual({
+      total_meals: 6,
+      total_meals_inside_diet: 5,
+      total_meals_off_diet: 1,
+      best_sequence_of_meals_inside_diet: 2,
+    })
   })
 })

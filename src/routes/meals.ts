@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { format } from 'date-fns'
+import { format, differenceInHours } from 'date-fns'
 import { randomUUID } from 'node:crypto'
 import { knex } from '../database'
 import { checkUserIdExists } from '../middlewares/check-user-id-exists'
@@ -74,9 +74,86 @@ export async function mealsRoutes(app: FastifyInstance) {
           }
         : undefined
 
-      return { meal: mealWithIsInsideDietAsBoolean }
+      return { meal: mealWithIsInsideDietAsBoolean ?? {} }
     },
   )
+
+  app.get('/metrics', { preHandler: [checkUserIdExists] }, async (request) => {
+    const { userId } = request.cookies
+
+    const totalMetrics = await knex('meals')
+      .leftJoin('meals as meals_inside_diet', function () {
+        this.on('meals_inside_diet.id', '=', 'meals.id').onVal(
+          'meals_inside_diet.is_inside_diet',
+          '=',
+          '1',
+        )
+      })
+      .leftJoin('meals as meals_off_diet', function () {
+        this.on('meals_off_diet.id', '=', 'meals.id').onVal(
+          'meals_off_diet.is_inside_diet',
+          '=',
+          '0',
+        )
+      })
+      .count({
+        total_meals: '*',
+        total_meals_inside_diet: 'meals_inside_diet.is_inside_diet',
+        total_meals_off_diet: 'meals_off_diet.is_inside_diet',
+      })
+      .groupBy('meals.user_id')
+      .where('meals.user_id', userId)
+      .first()
+
+    const meals = await knex('meals')
+      .where('user_id', userId)
+      .orderBy('consumed_at', 'asc')
+
+    const { bestSequence } = meals.reduce(
+      (acc, meal, index) => {
+        const consumptionDateOfCurrentMeal = new Date(meal.consumed_at)
+        const consumptionDateOfLastMeal = new Date(
+          meals[index - 1]?.consumed_at,
+        )
+
+        const differenceInHoursOfLastMeal =
+          index > 0
+            ? differenceInHours(
+                consumptionDateOfCurrentMeal,
+                consumptionDateOfLastMeal,
+              )
+            : 0
+
+        if (!meal.is_inside_diet || differenceInHoursOfLastMeal > 24) {
+          acc.currentSequence = 0
+
+          return acc
+        }
+
+        acc.currentSequence += 1
+
+        if (acc.currentSequence > acc.bestSequence) {
+          acc.bestSequence = acc.currentSequence
+        }
+
+        return acc
+      },
+      { bestSequence: 0, currentSequence: 0 },
+    )
+
+    const metrics = totalMetrics
+      ? { ...totalMetrics, best_sequence_of_meals_inside_diet: bestSequence }
+      : {
+          total_meals: 0,
+          total_meals_inside_diet: 0,
+          total_meals_off_diet: 0,
+          best_sequence_of_meals_inside_diet: 0,
+        }
+
+    return {
+      metrics,
+    }
+  })
 
   app.post('/', async (request, reply) => {
     const createMealBodySchema = z.object({
