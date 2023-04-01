@@ -196,6 +196,7 @@ export async function mealsRoutes(app: FastifyInstance) {
       consumed_at: consumedAt,
       is_inside_diet: isInsideDiet,
       user_id: userId,
+      created_at: new Date().toISOString(),
     })
 
     return reply.status(201).send()
@@ -255,6 +256,7 @@ export async function mealsRoutes(app: FastifyInstance) {
           description,
           consumed_at: consumedAt,
           is_inside_diet: isInsideDiet,
+          updated_at: new Date().toISOString(),
         })
 
       return reply.status(204).send()

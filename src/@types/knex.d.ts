@@ -10,6 +10,8 @@ declare module 'knex/types/tables' {
       consumed_at: string
       is_inside_diet: boolean
       user_id: string
+      created_at: string
+      updated_at: string
     }
   }
 }
