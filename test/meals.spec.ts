@@ -104,7 +104,7 @@ describe('Meals routes', () => {
     )
   })
 
-  it('should be able to edit meal', async () => {
+  it('should be able to edit a meal', async () => {
     const consumedAt = new Date().toISOString()
 
     const response = await request(app.server)
@@ -150,5 +150,38 @@ describe('Meals routes', () => {
         is_inside_diet: false,
       }),
     )
+  })
+
+  it('should be able to delete a meal', async () => {
+    const response = await request(app.server)
+      .post('/meals')
+      .send({
+        name: 'Chicken with potato',
+        description: 'Chicken with potato accompained by brown rice.',
+        consumed_at: new Date().toISOString(),
+        is_inside_diet: true,
+      })
+      .expect(201)
+
+    const cookies = response.get('Set-Cookie')
+
+    const mealsResponse = await request(app.server)
+      .get('/meals')
+      .set('Cookie', cookies)
+      .expect(200)
+
+    const mealId = mealsResponse.body.meals[0].meals_of_day[0].id
+
+    await request(app.server)
+      .delete(`/meals/${mealId}`)
+      .set('Cookie', cookies)
+      .expect(204)
+
+    const emptyMealsResponse = await request(app.server)
+      .get('/meals')
+      .set('Cookie', cookies)
+      .expect(200)
+
+    expect(emptyMealsResponse.body.meals).toEqual([])
   })
 })

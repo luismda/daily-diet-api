@@ -183,4 +183,37 @@ export async function mealsRoutes(app: FastifyInstance) {
       return reply.status(204).send()
     },
   )
+
+  app.delete(
+    '/:id',
+    { preHandler: [checkUserIdExists] },
+    async (request, reply) => {
+      const getMealParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+
+      const paramsSchemaValidation = getMealParamsSchema.safeParse(
+        request.params,
+      )
+
+      if (paramsSchemaValidation.success === false) {
+        return reply.status(400).send({
+          error: `Invalid request params: ${paramsSchemaValidation.error.message}`,
+        })
+      }
+
+      const { id } = paramsSchemaValidation.data
+
+      const { userId } = request.cookies
+
+      await knex('meals')
+        .where({
+          id,
+          user_id: userId,
+        })
+        .delete()
+
+      return reply.status(204).send()
+    },
+  )
 }
