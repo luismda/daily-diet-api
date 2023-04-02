@@ -141,14 +141,20 @@ export async function mealsRoutes(app: FastifyInstance) {
       { bestSequence: 0, currentSequence: 0 },
     )
 
-    const metrics = totalMetrics
-      ? { ...totalMetrics, best_sequence_of_meals_inside_diet: bestSequence }
-      : {
-          total_meals: 0,
-          total_meals_inside_diet: 0,
-          total_meals_off_diet: 0,
-          best_sequence_of_meals_inside_diet: 0,
-        }
+    const totalMeals = totalMetrics ? Number(totalMetrics.total_meals) : 0
+    const totalMealsInsideDiet = totalMetrics
+      ? Number(totalMetrics.total_meals_inside_diet)
+      : 0
+    const totalMealsOffDiet = totalMetrics
+      ? Number(totalMetrics.total_meals_off_diet)
+      : 0
+
+    const metrics = {
+      total_meals: totalMeals,
+      total_meals_inside_diet: totalMealsInsideDiet,
+      total_meals_off_diet: totalMealsOffDiet,
+      best_sequence_of_meals_inside_diet: totalMetrics ? bestSequence : 0,
+    }
 
     return {
       metrics,
