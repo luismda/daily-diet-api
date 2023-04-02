@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "knex": "node --no-warnings --loader tsx node_modules/.bin/knex",
     "lint": "eslint src --ext .ts --fix",
+    "build": "tsup src --out-dir build",
     "test": "vitest"
   },
   "keywords": [],
@@ -19,6 +23,7 @@
     "eslint": "^8.37.0",
     "sqlite3": "^5.1.6",
     "supertest": "^6.3.3",
+    "tsup": "^6.7.0",
     "tsx": "^3.12.6",
     "typescript": "^5.0.2",
     "vitest": "^0.29.8"
