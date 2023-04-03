@@ -1,6 +1,6 @@
 # Daily Diet API 🍽
 
-This project is a complete **API REST in Node.js** to register of meals and controlling of a daily diet. The project is a chalange of Node.js trail of Ignite - bootcamp of specialization in programing of [**Rocketseat**](https://github.com/rocketseat-education). The entire application was developed based on the **functional requirements** and **business rules** listed below.
+This project is a complete **REST API in Node.js** to register of meals and controlling of a daily diet. The project is a challenge of Node.js trail of Ignite - bootcamp of specialization in programing of [**Rocketseat**](https://github.com/rocketseat-education). The entire application was developed based on the **functional requirements** and **business rules** listed below.
 
 ## Functional requirements
 
